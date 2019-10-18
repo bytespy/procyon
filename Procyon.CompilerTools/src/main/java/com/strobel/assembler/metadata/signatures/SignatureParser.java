@@ -121,10 +121,6 @@ public final class SignatureParser {
 
         assert (current() == '<');
 
-        if (current() != '<') {
-            throw error("expected <");
-        }
-
         advance();
         ftps.add(parseFormalTypeParameter());
 
@@ -148,13 +144,12 @@ public final class SignatureParser {
 
     private String parseIdentifier() {
         final StringBuilder result = new StringBuilder();
-        while (!Character.isWhitespace(current())) {
+        while (current() != EOI) {
             final char c = current();
             switch (c) {
                 case ';':
                 case '.':
                 case '/':
-                case ':':
                 case '>':
                 case '<':
                     return result.toString();
@@ -182,10 +177,6 @@ public final class SignatureParser {
 
     private ClassTypeSignature parseClassTypeSignature() {
         assert (current() == 'L');
-
-        if (current() != 'L') {
-            throw error("expected a class type");
-        }
 
         advance();
 
@@ -237,9 +228,6 @@ public final class SignatureParser {
     private TypeArgument[] parseTypeArguments() {
         final Collection<TypeArgument> tas = new ArrayList<>(3);
         assert (current() == '<');
-        if (current() != '<') {
-            throw error("expected <");
-        }
         advance();
         tas.add(parseTypeArgument());
         while (current() != '>') {
@@ -283,9 +271,6 @@ public final class SignatureParser {
 
     private TypeVariableSignature parseTypeVariableSignature() {
         assert (current() == 'T');
-        if (current() != 'T') {
-            throw error("expected a type variable usage");
-        }
         advance();
         final TypeVariableSignature ts =
             TypeVariableSignature.make(parseIdentifier());
@@ -368,14 +353,12 @@ public final class SignatureParser {
 
         if (current() == ':') {
             advance();
-            switch (current()) {
-                case ':': // empty class bound
-                    fts.add(BottomSignature.make());
-                    break;
-
-                default: // parse class bound
-                    fts.add(parseFieldTypeSignature());
-                    break;
+            // parse class bound
+            if (current() == ':') { // empty class bound
+                fts.add(BottomSignature.make());
+            }
+            else {
+                fts.add(parseFieldTypeSignature());
             }
 
             // zero or more interface bounds
@@ -484,9 +467,6 @@ public final class SignatureParser {
 
     private FieldTypeSignature parseThrowsSignature() {
         assert (current() == '^');
-        if (current() != '^') {
-            throw error("expected throws signature");
-        }
         advance();
         return parseFieldTypeSignature();
     }
